@@ -70,7 +70,7 @@ lb = LabelBinarizer()
 # for example [0,1] will turn into [[1,0], [0,1]] but [0,1,2] will turn into [[1,0,0], [0,1,0], [0,0,1]]
 labels = lb.fit_transform(labels)
 
-
+# convert to floats i.e. so we can train
 labels = to_categorical(labels)
 
 data = np.array(data, dtype="float32")
@@ -88,7 +88,7 @@ To remove unbalanced Dataset
 	test_size=0.20, stratify=labels, random_state=42)
 
 # construct the training image generator for data augmentation
-aug = ImageDataGenerator(
+data_aug = ImageDataGenerator(
 	rotation_range=20,
 	zoom_range=0.15,
 	width_shift_range=0.2,
@@ -97,7 +97,9 @@ aug = ImageDataGenerator(
 	horizontal_flip=True,
 	fill_mode="nearest")
 
-# load the MobileNetV2 network, ensuring the head FC layer sets are left off
+# load the MobileNetV2 network, 
+# top layer isn't loaded so it can be modified
+# https://machinelearningmastery.com/how-to-use-transfer-learning-when-developing-convolutional-neural-network-models/
 baseModel = MobileNetV2(weights="imagenet", include_top=False,
 	input_tensor=Input(shape=(224, 224, 3)))
 
@@ -128,7 +130,7 @@ model.compile(loss="binary_crossentropy", optimizer=opt,
 # train the head of the network
 print("[INFO] training head...")
 H = model.fit(
-	aug.flow(trainX, trainY, batch_size=BS),
+	data_aug.flow(trainX, trainY, batch_size=BS),
 	steps_per_epoch=len(trainX) // BS,
 	validation_data=(testX, testY),
 	validation_steps=len(testX) // BS,
